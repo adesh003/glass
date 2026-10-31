@@ -1,0 +1,15 @@
+# Normalize text to LF in the repo so the Linux CI runner gets a valid gradlew.
+* text=auto eol=lf
+
+# Windows batch script must be CRLF.
+*.bat text eol=crlf
+
+# The Gradle wrapper script must be LF (executed by /bin/sh on CI).
+gradlew text eol=lf
+
+# Binary files — never apply line-ending conversion.
+*.jar binary
+*.keystore binary
+*.png binary
+*.webp binary
+*.ico binary
