@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Glass</string>
+    <string name="accessibility_desc">Glass draws the iOS-style Notification and Control panels over the top edge. It needs the accessibility overlay to show panels and read the top-edge swipe. It does not collect or read your screen content.</string>
 </resources>
