@@ -2,7 +2,13 @@ package com.adarsh.glass.ui.theme
 
 /**
  * Single place to tune the feel of the panels (CLAUDE.md requirement).
- * P1 uses simple values; P2 replaces the open/close animation with spring physics.
+ *
+ * Quick tuning guide:
+ *  - Too bouncy on release        -> raise SPRING_DAMPING toward 1.0 (e.g. 0.9).
+ *  - Too slow / floaty to settle  -> raise SPRING_STIFFNESS (e.g. 500-700).
+ *  - Flings too easily open/close -> raise FLING_VELOCITY_FRACTION.
+ *  - Over-drag feels too loose     -> lower OVERSCROLL_DAMP / MAX_OVERSCROLL.
+ *  - Blur too strong/weak          -> change BLUR_MAX_DP.
  */
 object Motion {
     /** Height of the invisible top edge touch strip (G1). */
@@ -14,18 +20,37 @@ object Motion {
     /** How far the finger must move down before a drag is recognised. */
     const val DRAG_START_THRESHOLD_DP = 6f
 
-    /** G4 (P1 approximation): on release, open if the panel is pulled past this fraction. */
+    /** G4: on release (no fling), open if the panel is pulled past this fraction, else close. */
     const val OPEN_THRESHOLD = 0.35f
 
-    /** While the panel is open, releasing above this fraction keeps it open; below it closes. */
-    const val STAY_OPEN_THRESHOLD = 0.75f
+    // ---- Spring (P2, §3.4) ----
+    const val SPRING_DAMPING = 0.85f
+    const val SPRING_STIFFNESS = 400f
 
-    /** Release animation durations (ms). P2 swaps these for spring(). */
-    const val OPEN_ANIM_MS = 260
-    const val CLOSE_ANIM_MS = 220
+    /** G4: |velocity| in fraction-of-screen per second above which a fling decides direction. */
+    const val FLING_VELOCITY_FRACTION = 1.2f
+
+    // ---- Rubber-band over-drag (G5) ----
+    /** Fraction of the over-drag distance that is actually applied past full open. */
+    const val OVERSCROLL_DAMP = 0.35f
+
+    /** Hard cap on how far past full open the panel can be dragged. */
+    const val MAX_OVERSCROLL = 0.08f
+
+    // ---- Content scale-in (§3.4) ----
+    const val CONTENT_MIN_SCALE = 0.92f
 
     /** Max dim behind the panel at full open. */
     const val SCRIM_MAX_ALPHA = 0.55f
+
+    // ---- Background blur (§3.4) ----
+    const val BLUR_MAX_DP = 36f
+
+    /** Only push a new blur radius to the window once it moves by this many px (avoids churn). */
+    const val BLUR_STEP_PX = 3
+
+    // ---- Haptics (G8) ----
+    const val HAPTICS_ENABLED = true
 
     /** Debug aid: faintly tint the two strip zones so the edge strip is findable while testing. */
     const val SHOW_STRIP_HINT = true

@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.view.MotionEvent
+import android.view.VelocityTracker
 import android.view.View
 import com.adarsh.glass.ui.theme.Motion
 
@@ -13,7 +14,8 @@ import com.adarsh.glass.ui.theme.Motion
  *
  * It owns the DOWN of the open gesture, so Android keeps delivering the whole drag to this
  * view even once the finger leaves the thin strip bounds. Left [LEFT_ZONE_FRACTION] width
- * opens Notification Center, the rest opens Control Center.
+ * opens Notification Center, the rest opens Control Center. On release it reports the fling
+ * velocity (px/sec, downward positive) so the service can decide open/close and seed the spring.
  */
 @SuppressLint("ViewConstructor")
 class EdgeStripView(
@@ -22,12 +24,13 @@ class EdgeStripView(
     private val screenHeightPx: () -> Int,
     private val onStart: (PanelKind) -> Unit,
     private val onDrag: (Float) -> Unit,
-    private val onEnd: (Float) -> Unit,
+    private val onEnd: (fraction: Float, velocityPxPerSec: Float) -> Unit,
 ) : View(context) {
 
     private var startY = 0f
     private var dragging = false
     private var kind = PanelKind.NOTIFICATIONS
+    private var velocityTracker: VelocityTracker? = null
     private val hintPaint = Paint(Paint.ANTI_ALIAS_FLAG)
 
     init {
@@ -46,10 +49,14 @@ class EdgeStripView(
                 } else {
                     PanelKind.CONTROLS
                 }
+                velocityTracker?.recycle()
+                velocityTracker = VelocityTracker.obtain()
+                velocityTracker?.addMovement(event)
                 return true
             }
 
             MotionEvent.ACTION_MOVE -> {
+                velocityTracker?.addMovement(event)
                 val dy = event.rawY - startY
                 if (!dragging && dy > startThresholdPx) {
                     dragging = true
@@ -65,9 +72,16 @@ class EdgeStripView(
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 if (dragging) {
                     val h = screenHeightPx().coerceAtLeast(1)
-                    onEnd(((event.rawY - startY) / h).coerceIn(0f, 1f))
+                    val vy = velocityTracker?.let {
+                        it.addMovement(event)
+                        it.computeCurrentVelocity(1000)
+                        it.yVelocity
+                    } ?: 0f
+                    onEnd(((event.rawY - startY) / h).coerceIn(0f, 1f), vy)
                 }
                 dragging = false
+                velocityTracker?.recycle()
+                velocityTracker = null
                 return true
             }
         }
