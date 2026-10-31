@@ -12,8 +12,10 @@ android {
         applicationId = "com.adarsh.glass"
         minSdk = 31
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        // CI passes the GitHub run number so every build has a unique, increasing version code
+        // (installs cleanly as an update). Falls back to 1 for local builds.
+        versionCode = (project.findProperty("glassVersionCode") as String?)?.toIntOrNull() ?: 1
+        versionName = (project.findProperty("glassVersionName") as String?) ?: "0.1.0"
     }
 
     // Fixed debug keystore committed in the repo so every build is signed with the
